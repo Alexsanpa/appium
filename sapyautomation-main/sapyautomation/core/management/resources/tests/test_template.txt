@@ -1,0 +1,32 @@
+""" $MODULE_DOC$
+"""
+from sapyautomation.core.test_cases import TestData
+from sapyautomation.vendors.sap.test_enviroment import SapTestSuite
+
+
+class $CLASS_NAME$(SapTestSuite):
+    """ $CLASS_DOC$
+    """
+
+    def setUp(self):
+        self.start_sap('QS4')
+
+        book = TestData(self.data_file)
+        self.data = book.data['Sheet1']
+
+    def $TEST_METHOD_NAME$(self):
+        self.step_0_sap_login()
+$STEPS_CALLS$
+
+    def step_0_sap_login(self):
+        """ Description: Login to SAP
+        Expected result: Successfully loged to SAP.
+        """
+        self.login()
+        self.get_evidence(0)
+$STEPS_METHODS$
+
+    def tearDown(self):
+        """ Close SAP
+        """
+        self.close_sap()

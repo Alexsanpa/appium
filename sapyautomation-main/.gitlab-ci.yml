@@ -1,0 +1,55 @@
+image: "python:3.8"
+
+before_script:
+    - python --version
+    - pip install -r test-requirements.txt
+
+stages:
+    - Static Analysis
+    - Test
+    - Build Package
+
+flake8:
+    stage: Static Analysis
+    script:
+        - flake8
+
+pylint:
+    stage: Static Analysis
+    script:
+    - pylint sapyautomation --extension-pkg-whitelist=cv2,win32gui
+
+unit_test:
+    stage: Test
+    script:
+        - python -m unittest discover
+
+stage_package:
+    before_script:
+        - pip install tox
+    stage: Build Package
+    only:
+        refs:
+            - develop
+    script:
+        - tox -e buildstage
+
+dev_package:
+    before_script:
+        - pip install tox
+    stage: Build Package
+    except:
+        refs:
+            - master,develop
+    script:
+        - tox -e builddev
+
+stable_package:
+    before_script:
+        - pip install tox
+    stage: Build Package
+    only:
+        refs:
+            - master
+    script:
+        - tox -e buildstable 

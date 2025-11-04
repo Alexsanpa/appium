@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>{{ sapy_title }}</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="bootstrap.min.css">
+	<style>
+		img.evidence {
+			width: 100%;
+			display: inline-block;
+			margin: 10px;
+		}
+		.buttons {
+			min-width: 100px;
+		}
+	</style>
+</head>
+<body>
+    <div class="container">
+        <div class="row">
+            <div class="col-xs-12">
+                <h2 class="text-capitalize">{{ sapy_title }}</h2>
+                <p class='attribute'><strong>Start Time: </strong>{{ header_info.start_time.strftime("%Y-%m-%d %H:%M:%S") }}</p>
+                <p class='attribute'><strong>Duration: </strong>{{ header_info.status.duration }}</p>
+                <p class='attribute'><strong>Summary: </strong>Total: {{ header_info.status.total }}, Pass: {{ header_info.status.success }}{% if header_info.status.failure %}, Fail: {{ header_info.status.failure }}{% endif %}{% if header_info.status.error %}, Error: {{ header_info.status.error }}{% endif %}{% if header_info.status.skip %}, Skip: {{ header_info.status.skip }}{% endif %}</p>
+            </div>
+        </div>
+        {%- for test_case_name, tests_results in all_results.items() %}
+        {%- if tests_results %}
+        <div class="row">
+            <div class="col-xs-12 col-sm-10 col-md-10">
+                <table class='table table-hover table-responsive'>
+                    <thead>
+                        <tr>
+                            <th>{{ test_case_name }}</th>
+                            <th>Status</th>
+                            <th class="buttons">
+							{% set sapy_test_case = test_case_name.split('.')[-1] %}
+							{%- if sapy_test_case in sapy_cases_log and sapy_cases_log[sapy_test_case] != '' -%}
+							<a href="../{{ sapy_cases_log[sapy_test_case][0] }}">View log</a>
+							{%- endif -%}
+							<br />
+							{%- if sapy_test_case in sapy_cases_log and sapy_cases_log[sapy_test_case] != '' -%}
+							<a href="docs/{{ sapy_cases_evidence_report[sapy_test_case][0] }}" target="_blank" download="docs/{{ sapy_cases_evidence_report[sapy_test_case][0] }}">View report</a>
+							{%- endif -%}
+							<br />
+							{%- for sapy_test_video in sapy_cases_evidence[sapy_test_case] -%}
+								{%- if sapy_test_video.split(".")[-1] == "avi"  -%}
+									<a href="video/{{sapy_test_uid}}/{{ sapy_test_video }}">View video</a>
+								{%- endif -%}
+							{%- endfor -%}
+							</th>
+                        </tr>
+					{%- set resumed_from = sapy_resumed_from[sapy_test_case] -%}
+                    </thead>
+                    <tbody>
+                        {%- for test_case in tests_results %}
+						{%- if resumed_from != None -%}
+	                    <tr>
+	                        <td><b>Resumed From:</b> {{ resumed_from }}</td>
+							{%- set past_report = resumed_from.split('_')[:-1]|join('_') -%}
+	                        <th colspan="2"><a href="{{ past_report }}_{{test_case.test_id.split(".")[-3]}}.html">View past report</a></th>
+	                    </tr>
+						{%- endif -%}
+						{%- if test_case.err -%}
+						{%- set is_paused = 1 if 'Paused' in test_case.err else 0 -%}
+						{%- else -%}
+						{%- set is_paused = 0 -%}
+						{%- endif -%}
+                        {%- if not test_case.subtests is defined %}
+                        <tr class='{{ status_tags[test_case.outcome] }}'>
+                            <td class="col-xs-10">{{ test_case.test_id.split(".")[-1] }}</td>
+                            <td class="col-xs-1">
+                                <span class="label label-{{ status_tags[test_case.outcome] }}" style="display:block;width:50px;">
+                                    {%- if test_case.outcome == test_case.SUCCESS -%}
+                                        Pass
+                                    {%- elif test_case.outcome == test_case.SKIP -%}
+										{{ 'Paused' if is_paused else 'Skip' }}
+                                    {%- elif test_case.outcome == test_case.FAILURE -%}
+                                        Fail
+                                    {%- else -%}
+                                        Error
+                                    {%- endif -%}
+                                </span>
+                            </td>
+                            <td class="col-xs-1"></td>
+                        </tr>
+                        {{sapy_resumed_from[test_case.test_id.split(".")[-2]]}}
+                        {%- if test_case.outcome != test_case.SKIP or is_paused %}
+                        <tr>
+                            <td class="col-xs-9">
+								<p>
+									{%- if is_paused %}
+	                                	{%- if test_case.err %}{{ test_case.err }}{% endif %}
+	                                	<hr />
+                                	{%- endif -%}
+									{%- set case_index = loop.index-1 -%}
+									{%- for evidence in sapy_cases_evidence[test_case.test_id.split(".")[-2]] -%}
+										{%- set evidence_index = evidence.split("-")[-1] -%}
+										{%- if test_case.test_id.split(".")[-1] in evidence and test_case.test_id.split(".")[-2] in evidence and case_index|int() == evidence_index|int()-%}
+											{%- if evidence.split(".")[-1] != "avi" -%}
+										<a href="evidence/{{sapy_test_uid}}/{{evidence}}"><img src="evidence/{{sapy_test_uid}}/{{evidence}}" class="evidence"/></a>
+											{%- endif -%}
+										{%- endif -%}
+									{%- endfor -%}
+								</p>
+								<hr />
+								<hr />
+								<p><b>source</b></p>
+								<p>
+								{%- for line in sapy_cases_source[test_case.test_id.split(".")[-1]] -%}
+									{% set this_line = [test_case.test_id.split(".")[-3], '.py','", ','line ', line[0]]|join('') %}
+									{%- if  this_line in test_case.test_exception_info -%}
+									<p style="color:maroon;">{{ [line[0], line[1]]|join(':') }}</p>
+									{%- else -%}
+									{{ [line[0], line[1]]|join(':') }}<br />
+									{%- endif -%}
+								{%- endfor -%}
+								</p>
+							</td>
+                            <td class="col-xs-9" colspan="2">
+                                {%- if test_case.stdout %}<p>{{ test_case.stdout }}</p>{% endif %}
+                                {%- if test_case.err and test_case.err[0].__name__ == None -%}
+                                <p style="color:maroon;">{{ test_case.err[0].__name__ }}: {{ test_case.err[1] }}</p>
+                                {%- endif -%}
+                                {%- if test_case.err %}<p style="color:maroon;">{{ test_case.test_exception_info }}</p>{% endif %}
+							</td>
+                        </tr>
+                        {%- elif test_case.outcome == test_case.SKIP %}
+                        <tr >
+                            <td class="col-xs-9" colspan="3">
+                                {%- if test_case.stdout %}<p>{{ test_case.stdout }}</p>{% endif %}
+                                {%- if test_case.err %}<p style="color:maroon;">{{ test_case.err }}</p>{% endif %}
+                            </td>
+                        </tr>
+                        {%- endif %}
+                        {%- else %}
+                        <tr class='{{ status_tags[test_case.outcome] }}'>
+                            <td class="col-xs-10">{{ test_case.test_id.split(".")[-1] }}</td>
+                            <td class="col-xs-1">
+                                <span class="label label-{{ status_tags[test_case.outcome] }}" style="display:block;width:40px;">
+                                    {%- if test_case.outcome == test_case.SUCCESS -%}
+                                        Pass
+                                    {%- else -%}
+                                        Fail
+                                    {%- endif -%}
+                                </span>
+                            </td>
+                            <td class="col-xs-1">
+                                {%- if test_case.subtests %}
+                                <button class="btn btn-default btn-xs">View</button>
+                                {%- endif %}
+                            </td>
+                        </tr>
+                        {%- if test_case.subtests %}
+                        <tr >
+                            <td colspan="3">
+
+                                <table class='table table-hover table-responsive'>
+                                    <tbody>
+                                        {%- for subtest in test_case.subtests %}
+                                        <tr class='{{ status_tags[subtest.outcome] }}'>
+                                            <td class="col-xs-10">{{ subtest.test_id.split(".")[-1] }}</td>
+                                            <td class="col-xs-1">
+                                                <span class="label label-{{ status_tags[subtest.outcome] }}" style="display:block;width:40px;">
+                                                {%- if subtest.outcome == subtest.SUCCESS -%}
+                                                    Pass
+                                                {%- else -%}
+                                                    Fail
+                                                {%- endif -%}
+                                                </span>
+                                            </td>
+                                            <td class="col-xs-1">
+                                                {%- if subtest.err %}
+                                                <button class="btn btn-default btn-xs">View</button>
+                                                {%- endif %}
+                                            </td>
+                                        </tr>
+                                        {%- if subtest.err or subtest.err %}
+                                        <tr >
+                                            <td class="col-xs-9" colspan="3">
+                                                {%- if subtest.err %}<p style="color:maroon;">{{ subtest.err[0].__name__ }}: {{ subtest.err[1] }}</p>{% endif %}
+                                                {%- if subtest.err %}<p style="color:maroon;">{{ subtest.test_exception_info }}</p>{% endif %}
+                                            </td>
+                                        </tr>
+                                        {%- endif %}
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </td>
+                        </tr>
+                        {%- endif %}
+                        {%- endif %}
+                        {%- endfor %}
+                        <tr>
+                            <td colspan="3">
+                                Total: {{ summaries[test_case_name].total }}, Pass: {{ summaries[test_case_name].success }}{% if summaries[test_case_name].failure %}, Fail: {{ summaries[test_case_name].failure }}{% endif %}{% if summaries[test_case_name].error %}, Error: {{ summaries[test_case_name].error }}{% endif %}{% if summaries[test_case_name].skip %}, Skip: {{ summaries[test_case_name].skip }}{% endif %} -- Duration: {{ summaries[test_case_name].duration }}
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        {%- endif %}
+        {%- endfor %}
+    </div>
+</body>
+</html
