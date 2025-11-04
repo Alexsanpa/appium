@@ -1,0 +1,36 @@
+# =============================================================================
+# CORE - Appium y Selenium
+# =============================================================================
+Appium-Python-Client==5.2.4
+selenium==4.27.1
+
+# =============================================================================
+# TESTING - Pytest y extensiones
+# =============================================================================
+pytest==8.3.4
+pytest-html==4.1.1
+pytest-xdist>=3.5.0  # Para ejecución paralela
+pytest-rerunfailures>=13.0  # Para reintentar tests fallidos
+pytest-timeout>=2.2.0  # Para timeout de tests
+
+# =============================================================================
+# REPORTING - Allure y reportes
+# =============================================================================
+allure-pytest==2.13.5
+reportlab>=4.0.0  # Para generación de PDFs
+Pillow>=10.0.0  # Para procesamiento de imágenes
+pandas 
+openpyxl
+# =============================================================================
+# CONFIGURATION - Gestión de configuración
+# =============================================================================
+python-dotenv>=1.0.0  # Para archivos .env
+configparser>=6.0.0  # Para archivos .ini (alternativa)
+
+# =============================================================================
+# UTILITIES - Utilidades
+# =============================================================================
+requests>=2.31.0  # Para verificar Appium Server
+colorama>=0.4.6  # Para colores en consola 
+requests
+mitmproxy
