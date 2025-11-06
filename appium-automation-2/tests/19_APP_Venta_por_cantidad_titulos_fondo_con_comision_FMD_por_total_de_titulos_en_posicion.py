@@ -8,6 +8,9 @@ from pages.home_page import ValmexHomePage
 from pages.login_page import ValmexLoginPage
 from pages.operations_page import ValmexOperationsPage
 from pages.vender_page import ValmexVenderPage
+from sapyautomation.core.test_cases import TestData
+import os
+
 
 from utils.evidences import take_evidence
 import subprocess
@@ -20,10 +23,24 @@ class TestValmexApp:
 
     home_page: ValmexHomePage = None
 
-    def test_valmex_app(self, valmex_driver):
+    def test_19_APP_Venta_por_cantidad_titulos_FMD_por_total_de_titulos_en_posicion(self, valmex_driver):
         """
         Ejecución de Todos los Pasos.
         """
+        # Get the directory where this script is located
+        current_dir = os.path.dirname(os.path.abspath(__file__))
+        # Go up one level to the project root and then to test_data
+        project_root = os.path.dirname(current_dir)
+        excel_path = os.path.join(
+            project_root,
+            "test_data",
+            "19_APP_Venta_por_cantidad_titulos_fondo_con_comision_FMD_por_total_de_titulos_en_posicion.xlsx",
+        )
+
+        # Leer datos de prueba desde un archivo de Excel
+        book = TestData(excel_path)
+        self.data = book.data["data"]
+
         self.login_page = ValmexLoginPage(valmex_driver)
         self.home_page = ValmexHomePage(valmex_driver)
         self.operations_page = ValmexOperationsPage(valmex_driver)
@@ -38,7 +55,7 @@ class TestValmexApp:
         self.step_03_click_operaciones(valmex_driver)
         self.step_04_click_vender(valmex_driver)
         self.step_05_seleccionar_fondo(valmex_driver)
-        self.step_06_ingreso_del_importe_de_venta(valmex_driver)
+        self.step_06_total_titulos_en_posicion(valmex_driver)
         self.step_07_Ejecucion_de_la_venta(valmex_driver)
         self.step_08_validacion_de_carga_de_token_movil(valmex_driver)
         self.step_09_validacion_de_datos_del_comprobante_de_venta(valmex_driver)
@@ -53,19 +70,21 @@ class TestValmexApp:
             self.login_page.verificar_existencia_texto01() is True
         ), "❌ FALLA DE ASSERT: El texto clave de inicio no se encontró después de 15s."
         take_evidence(driver)
+        sleep(10)
 
     def step_02_ingresar_password(self, driver):
         """
-        Descripcion: Clic en Términos y Condiciones y verificación de navegación.
-        Resultado Esperado: Carga la pantalla de Términos y Condiciones.
+        Descripcion: Ingresar password en la pantalla de login y acceder a la aplicación.
+        Resultado Esperado: Carga la pantalla de inicio correctamente.
         """
         print("step_02_ingresar_password")
         assert (
-            self.login_page.set_Access_with_credentials("VEYTesting9$", driver) is True
+            self.login_page.set_Access_with_credentials(self.data["password"], driver)
+            is True
         ), " No fue posible realizar la accion de inicio de sesion."
         driver.hide_keyboard()
         take_evidence(driver)
-        sleep(30)  # Espera para asegurar que la pantalla de inicio se haya cargado
+        sleep(20)  # Espera para asegurar que la pantalla de inicio se haya cargado
         # Validar que la página de inicio se haya cargado correctamente
         assert (
             self.home_page.validate_home_page_loaded() is True
@@ -108,22 +127,24 @@ class TestValmexApp:
         """
         print("step_05_seleccionar_fondo")
         assert (
-            self.vender_page.select_Fund_by_index(0) is True
+            self.vender_page.select_fund_by_name(
+                self.data["fondo"] 
+            )
+            is True
         ), " No fue posible seleccionar el fondo por índice."
         take_evidence(driver)
 
-    def step_06_ingreso_de_titulos_a_vender(self, driver):
+    def step_06_total_titulos_en_posicion(self, driver):
         """
-        Descripcion: Ingresar numero de títulos a vender
-        Resultado Esperado: Se debe ingresar el número de títulos y continuar correctamente.
+        Descripcion: se selecciona el check de 
+        Resultado Esperado: Se debe ingresar el monto y continuar correctamente.
         """
-        print("step_06_ingreso_de_titulos_a_vender")
+        print("step_06_ingreso_del_importe_de_venta")
         assert (
-            self.vender_page.set_sell_amount_by_titles(self.data["number_of_titles"])
-            is True
-        ), " No fue posible ingresar el número de títulos y continuar."
-        driver.hide_keyboard()
+            self.vender_page.click_vender_posicion_total() is True
+        ), " No fue posible ingresar el monto y continuar."
         take_evidence(driver)
+        self.vender_page._scroll_page_down()
         sleep(5)  # Espera para asegurar que la pantalla de confirmación se haya cargado
 
     def step_07_Ejecucion_de_la_venta(self, driver):
@@ -133,7 +154,7 @@ class TestValmexApp:
         """
         print("step_07_Ejecucion_de_la_venta")
         assert (
-            self.vender_page.select_contract_by_number("244231") is True
+            self.vender_page.select_contract_by_number(self.data["contract"]) is True
         ), " No fue posible seleccionar el contrato por número."
         take_evidence(driver)
         sleep(5)  # Espera para asegurar que la pantalla de confirmación se haya cargado
@@ -174,4 +195,4 @@ class TestValmexApp:
         take_evidence(driver)
         sleep(
             5
-        )  # Espera para asegurar que la pantalla de detalle de operación se haya cargado
+        ) 

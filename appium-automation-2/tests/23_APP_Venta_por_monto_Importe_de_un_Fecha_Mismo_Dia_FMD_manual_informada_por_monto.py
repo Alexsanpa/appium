@@ -23,7 +23,7 @@ class TestValmexApp:
 
     home_page: ValmexHomePage = None
 
-    def test_valmex_app(self, valmex_driver):
+    def test_23_APP_Venta_por_monto_Importe_de_un_FMD_manual_informada_por_monto(self, valmex_driver):
         """
         Ejecución de Todos los Pasos.
         """
@@ -34,7 +34,7 @@ class TestValmexApp:
         excel_path = os.path.join(
             project_root,
             "test_data",
-            "APP_Venta_por_monto_Importe_de_un_Fecha_mismo_dia_FMD.xlsx",
+            "23_APP_Venta_por_monto_Importe_de_un_Fecha_Mismo_Dia_FMD_manual_informada_por_monto.xlsx",
         )
 
         # Leer datos de prueba desde un archivo de Excel
@@ -70,6 +70,7 @@ class TestValmexApp:
             self.login_page.verificar_existencia_texto01() is True
         ), "❌ FALLA DE ASSERT: El texto clave de inicio no se encontró después de 15s."
         take_evidence(driver)
+        sleep(10)
 
     def step_02_ingresar_password(self, driver):
         """
@@ -126,8 +127,8 @@ class TestValmexApp:
         """
         print("step_05_seleccionar_fondo")
         assert (
-            self.vender_page.select_fund_by_criteria(
-                liquidity_days=0  # Que liquide hoy
+            self.vender_page.select_fund_by_name(
+                self.data["fondo"] 
             )
             is True
         ), " No fue posible seleccionar el fondo por índice."
@@ -142,8 +143,8 @@ class TestValmexApp:
         assert (
             self.vender_page.set_sell_amount(self.data["sell_amount"]) is True
         ), " No fue posible ingresar el monto y continuar."
-        driver.hide_keyboard()
         take_evidence(driver)
+        self.vender_page._scroll_page_down()
         sleep(5)  # Espera para asegurar que la pantalla de confirmación se haya cargado
 
     def step_07_Ejecucion_de_la_venta(self, driver):
@@ -194,4 +195,4 @@ class TestValmexApp:
         take_evidence(driver)
         sleep(
             5
-        )  # Espera para asegurar que la pantalla de detalle de operación se haya cargado
+        ) 

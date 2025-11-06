@@ -5,6 +5,8 @@ from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.common.keys import Keys
 from appium.webdriver.common.appiumby import AppiumBy
 
+from conftest import driver
+
 
 class ValmexVenderPage:
     """
@@ -28,6 +30,9 @@ class ValmexVenderPage:
         AppiumBy.XPATH,
         '//android.view.View[@content-desc="Detalle de operación"]',
     )
+
+    VENDER_TOTAL = (AppiumBy.XPATH,'//android.widget.Switch[contains(@content-desc, "Vender posición total")]')
+    CUENTA_BANCARIA = (AppiumBy.XPATH, '//android.widget.Switch[@content-desc="Vender posición total"]') 
 
     DEFAULT_WAIT_TIME = 5
 
@@ -98,7 +103,7 @@ class ValmexVenderPage:
         except Exception as e:
             print(f"❌ Error al seleccionar fondo por nombre: {e}")
             return False
-
+        
     def select_fund_by_criteria(
         self, name=None, value_min=None, value_max=None, liquidity_days=None
     ):
@@ -592,7 +597,11 @@ class ValmexVenderPage:
             )
             amount_input.click()
             amount_input.clear()
-            amount_input.send_keys(amount)
+            amount_input.send_keys(amount, Keys.ENTER)
+            try:
+                self.driver.hide_keyboard()  # Método oficial de Appium
+            except Exception:
+                driver.press_keycode(4)
             return True
 
         except TimeoutException:
@@ -1233,3 +1242,34 @@ class ValmexVenderPage:
         except Exception as e:
             print(f"❌ Error obteniendo contenido de la página: {e}")
             return []
+        
+    def click_vender_posicion_total(self):
+        """
+        Hace clic en el botón Vender posicion total
+
+        Returns:
+            bool: True si el clic fue exitoso, False en caso contrario.
+        """
+        try:
+            # Wait for the button to be enabled and clickable
+            vender_total = self.wait.until(
+                EC.element_to_be_clickable(self.VENDER_TOTAL)
+            )
+
+            # Verify button is enabled before clicking
+            is_enabled = vender_total.get_attribute("enabled")
+            is_clickable = vender_total.get_attribute("clickable")
+
+            if is_enabled == "true" and is_clickable == "true":
+                vender_total.click()
+                return True
+            else:
+                print("❌ Botón Check  no está habilitado")
+                return False
+
+        except TimeoutException:
+            print("❌ No se encontró el botón Vender o no está habilitado")
+            return False
+        except Exception as e:
+            print(f"❌ Error al hacer clic en el Check: {e}")
+            return False

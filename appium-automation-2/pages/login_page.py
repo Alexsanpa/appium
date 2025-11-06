@@ -44,7 +44,7 @@ class ValmexLoginPage:
 
     def set_Access_with_credentials(self, password, driver):
         """
-        Establece la contraseña en el campo correspondiente.
+        Establece la contraseña en el campo correspondiente y oculta el teclado antes de continuar.
         """
         try:
             password_field = self.wait.until(
@@ -52,12 +52,21 @@ class ValmexLoginPage:
             )
             password_field.click()
             password_field.send_keys(password)
+
+            # ✅ Ocular teclado de manera segura
+            try:
+                self.driver.hide_keyboard()  # Método oficial de Appium
+            except Exception:
+                # fallback: usa tecla 'Back' si falla
+                driver.press_keycode(4)
+
+            # Continuar con el botón Entrar
             entrar_button = self.wait.until(
                 EC.element_to_be_clickable(self.ENTRAR_BUTTON)
             )
-            driver.hide_keyboard()
             entrar_button.click()
             return True
+
         except TimeoutException:
             return False
 
